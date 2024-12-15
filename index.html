@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="todo-app-wrapper">
+        <!-- Input Container -->
+        <div class="input-container">
+            <h1>To-Do Application</h1>
+            <label for="todoInput">Enter To-Do:</label>
+            <input type="text" id="todoInput" placeholder="Enter a new to-do">
+    
+            <div class="todo-type-toggle">
+                <label>
+                    <input type="radio" name="todoType" value="normal" checked>
+                    Normal
+                </label>
+                <label>
+                    <input type="radio" name="todoType" value="time-bound">
+                    Time-Bound
+                </label>
+            </div>
+    
+            <div id="timeInputContainer">
+                <label for="timeInput">Time Limit (in mins):</label>
+                <input type="number" id="timeInput" placeholder="Enter time limit">
+            </div>
+    
+            <button id="addTodo"> Add To-Do</button>
+        </div>
+    
+        <!-- To-Do Container -->
+        <div class="todo-list-container">
+            <h2>To-Do List</h2>
+            <div id="todoList" class="todo-card-container"></div>
+            <div id="completedCount">Completed: 0</div>
+        </div>
+    </div>
+    <script src="index.js"></script>
+</body>
+</html>
