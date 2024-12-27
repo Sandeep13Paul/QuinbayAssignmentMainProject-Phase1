@@ -1,34 +1,99 @@
 const todoInput = document.getElementById("todoInput");
-const timeInputContainer = document.getElementById("timeInputContainer");
-const timeInput = document.getElementById("timeInput");
+const dateInputContainer = document.getElementById("dateInputContainer");
+const dueDateInput = document.getElementById("dueDateInput");
 const addTodoButton = document.getElementById("addTodo");
 const todoList = document.getElementById("todoList");
 const completedCountDisplay = document.getElementById("completedCount");
-const totalCountDisplay = document.getElementById("totalCount");
+const totalCountDisplay = document.getElementById("totalCount"); // Add total count display
 const todoTypeToggle = document.getElementsByName("todoType");
 
-let completedCount = 0;
-let totalCount = 0;
+let todos = [];
+const server = "server address";
 
-const updateCompletedCount = () => {
-  completedCountDisplay.textContent = `Completed: ${completedCount}`;
+// Toggle the visibility of the date input container based on radio selection
+const toggleDateInput = () => {
+  const isDateBound =
+    document.querySelector('input[name="todoType"]:checked').value ===
+    "date-bound";
+  dateInputContainer.style.display = isDateBound ? "block" : "none";
 };
 
-const updateTotalCount = () => {
-  totalCountDisplay.textContent = `Total Todos: ${totalCount}`;
-};
-
-const toggleTimeInput = () => {
-  const selectedType = [...todoTypeToggle].find((radio) => radio.checked).value;
-  timeInputContainer.style.display =
-    selectedType === "time-bound" ? "flex" : "none";
-};
-
+// Listen to changes on the todo type radio buttons
 todoTypeToggle.forEach((radio) => {
-  radio.addEventListener("change", toggleTimeInput);
+  radio.addEventListener("change", toggleDateInput);
 });
 
-const createTodoCard = (todoText, timeLimit, isTimeBound) => {
+// Call the toggle function to set the initial state
+toggleDateInput();
+
+// Fetch todos from the backend
+const fetchTodos = async () => {
+  const response = await fetch(`${server}/api/todos`);
+  const data = await response.json();
+  if (Array.isArray(data)) {
+    todos = data;
+    checkExpiration(); // Check expiration after fetching todos
+    renderTodos();
+    updateCounts(); // Update both completed and total counts
+  }
+};
+
+// Periodically check for expired tasks
+const startExpirationCheck = () => {
+  setInterval(() => {
+    checkExpiration(); // Check expiration for tasks every minute
+    renderTodos(); // Re-render the list to reflect changes
+  }, 60000); // Check every 60 seconds
+};
+
+// Check for expired tasks
+const checkExpiration = () => {
+  todos.forEach((todo) => {
+    if (todo.dueDate && !todo.completed) {
+      const dueDateTime = new Date(todo.dueDate).getTime();
+      if (dueDateTime < Date.now()) {
+        todo.isExpired = true; // Mark task as expired
+      } else {
+        todo.isExpired = false; // Task is not expired
+      }
+    }
+  });
+};
+
+// Render todos
+const renderTodos = () => {
+  todoList.innerHTML = ""; // Clear the list first
+
+  todos.forEach((todo) => {
+    const todoCard = createTodoCard(
+      todo.text,
+      todo.dueDate,
+      todo.id,
+      todo.completed,
+      todo.createdAt,
+      todo.isExpired
+    );
+    todoList.appendChild(todoCard);
+  });
+
+  updateCounts(); // Update both completed and total counts
+};
+
+// Update counts
+const updateCounts = () => {
+  const completedCount = todos.filter((todo) => todo.completed).length;
+  completedCountDisplay.textContent = `Completed: ${completedCount}`;
+  totalCountDisplay.textContent = `Total: ${todos.length}`;
+};
+
+const createTodoCard = (
+  todoText,
+  dueDate,
+  taskId,
+  isCompleted,
+  createdAt,
+  isExpired
+) => {
   const todoCard = document.createElement("div");
   todoCard.classList.add("todo-card");
 
@@ -36,9 +101,18 @@ const createTodoCard = (todoText, timeLimit, isTimeBound) => {
   todoHeader.classList.add("todo-header");
 
   const dateElement = document.createElement("span");
-  dateElement.textContent = `Created: ${new Date().toLocaleString()}`;
-
+  const createdDate = new Date(createdAt);
+  dateElement.textContent = `Created: ${createdDate.toLocaleString()}`;
   todoHeader.appendChild(dateElement);
+
+  const dueDateElement = document.createElement("span");
+  if (dueDate) {
+    const dueDateObj = new Date(dueDate);
+    dueDateElement.textContent = ` Due: ${dueDateObj.toLocaleString()}`;
+  } else {
+    dueDateElement.textContent = " No Due Date";
+  }
+  todoHeader.appendChild(dueDateElement);
 
   const textElement = document.createElement("p");
   textElement.textContent = todoText;
@@ -54,77 +128,49 @@ const createTodoCard = (todoText, timeLimit, isTimeBound) => {
   deleteButton.innerHTML = "&#10005;";
   deleteButton.classList.add("delete-btn");
 
-  const editButton = document.createElement("button");
-  editButton.innerHTML = "&#9998;";
-  editButton.classList.add("edit-btn");
-
-  let timerInterval;
-  let taskCompleted = false;
-
-  if (timeLimit) {
-    const timer = document.createElement("span");
-    timer.textContent = `Time left: ${timeLimit} mins`;
-
-    timerInterval = setInterval(() => {
-      timeLimit--;
-      timer.textContent = `Time left: ${timeLimit} mins`;
-
-      if (timeLimit <= 0) {
-        clearInterval(timerInterval);
-        if (!taskCompleted) {
-          timer.textContent = "Time expired!";
-          completeButton.style.display = "none";
-          editButton.style.display = "none";
-
-          const expiredMessage = document.createElement("div");
-          expiredMessage.textContent = "Task not completed within time.";
-          expiredMessage.classList.add("task-expired-message");
-          todoCard.appendChild(expiredMessage);
-        }
-      }
-    }, 60000);
-
-    todoCard.appendChild(timer);
+  // Apply button visibility based on completion state
+  if (isCompleted) {
+    completeButton.style.display = "none";
+    todoCard.classList.add("completed");
+  } else if (isExpired) {
+    const expiredMessage = document.createElement("div");
+    expiredMessage.textContent = "Task expired!";
+    expiredMessage.classList.add("task-expired-message");
+    completeButton.style.display = "none";
+    todoCard.appendChild(expiredMessage); // Display expired message
   }
 
+  // Complete button logic
   completeButton.addEventListener("click", () => {
-    taskCompleted = true;
-    clearInterval(timerInterval);
-    todoCard.classList.add("completed");
-    completedCount++;
-
-    if (isTimeBound) {
-      const timerElement = todoCard.querySelector("span");
-      if (timerElement) timerElement.remove();
-    }
-
-    completeButton.style.display = "none";
-    editButton.style.display = "none";
-
-    deleteButton.style.textDecoration = "none";
-
-    updateCompletedCount();
+    fetch(`${server}/api/todos/${taskId}/complete`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((response) => response.json())
+      .then(() => {
+        const todoIndex = todos.findIndex((todo) => todo.id === taskId);
+        if (todoIndex > -1) {
+          todos[todoIndex].completed = true;
+          renderTodos();
+          updateCounts();
+        }
+      });
   });
 
+  // Delete button logic
   deleteButton.addEventListener("click", () => {
-    if (todoCard.classList.contains("completed")) {
-      completedCount--;
-    }
-    todoCard.remove();
-    totalCount--;
-    updateCompletedCount();
-    updateTotalCount();
-  });
-
-  editButton.addEventListener("click", () => {
-    const newTodoText = prompt("Edit your to-do:", textElement.textContent);
-    if (newTodoText) {
-      textElement.textContent = newTodoText;
-    }
+    fetch(`${server}/api/todos/${taskId}`, { method: "DELETE" })
+      .then(() => {
+        todos = todos.filter((todo) => todo.id !== taskId);
+        renderTodos();
+        updateCounts();
+      })
+      .catch((error) => {
+        alert("Error deleting todo: " + error.message);
+      });
   });
 
   buttonGroup.appendChild(completeButton);
-  buttonGroup.appendChild(editButton);
   buttonGroup.appendChild(deleteButton);
 
   todoCard.appendChild(todoHeader);
@@ -134,28 +180,50 @@ const createTodoCard = (todoText, timeLimit, isTimeBound) => {
   return todoCard;
 };
 
+// Add todo
 const addTodo = () => {
   const todoText = todoInput.value.trim();
-  const isTimeBound =
+  const isDateBound =
     document.querySelector('input[name="todoType"]:checked').value ===
-    "time-bound";
-  const timeLimit = isTimeBound ? parseInt(timeInput.value, 10) : null;
+    "date-bound";
+  const dueDate = isDateBound
+    ? new Date(dueDateInput.value).toISOString()
+    : null;
 
-  if (!todoText || (isTimeBound && (isNaN(timeLimit) || timeLimit <= 0))) {
-    alert("Please enter valid to-do text and time limit (if time-bound).");
+  if (
+    !todoText ||
+    (isDateBound && (!dueDate || new Date(dueDate) < new Date()))
+  ) {
+    alert("Please enter valid to-do text and a future due date.");
     return;
   }
 
-  const todoCard = createTodoCard(todoText, timeLimit, isTimeBound);
-  todoList.appendChild(todoCard);
+  // Send to backend to create the todo
+  fetch(`${server}/api/todos`, {
+    method: "POST",
+    body: JSON.stringify({
+      text: todoText,
+      dueDate: dueDate,
+    }),
+    headers: { "Content-Type": "application/json" },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      todos.push(data);
+      checkExpiration(); // Check expiration after adding a new todo
+      renderTodos();
+      updateCounts(); // Update both completed and total counts
+    })
+    .catch((error) => {
+      alert("Error: " + error.message);
+    });
 
-  totalCount++;
-  updateTotalCount();
   todoInput.value = "";
-  timeInput.value = "";
+  dueDateInput.value = "";
 };
 
 addTodoButton.addEventListener("click", addTodo);
 
-updateCompletedCount();
-updateTotalCount();
+// Fetch todos on page load
+fetchTodos();
+startExpirationCheck(); // Start the expiration check on page load
