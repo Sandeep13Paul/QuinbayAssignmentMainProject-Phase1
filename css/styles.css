@@ -105,8 +105,8 @@ button:hover {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     padding: 20px;
     align-items: center;
-    width: 95%; /* Adjust width */
-    max-width: 900px;/* Wider container */
+    width: 95%;
+    max-width: 900px;
 }
 
 .todo-list-container h2 {
@@ -126,7 +126,7 @@ button:hover {
     border: 1px solid #ddd;
     border-radius: 10px;
     padding: 20px;
-    width: 300px; /* Larger card size */
+    width: 300px;
     box-sizing: border-box;
     text-align: center;
     display: flex;
@@ -146,10 +146,9 @@ button:hover {
     color: #888;
 }
 
-/* Ensure buttons remain unaffected by the completion status */
 .todo-card.completed .button-group button {
-    text-decoration: none; /* Ensure no strike-through effect on buttons */
-    color: inherit; /* Inherit color from the parent */
+    text-decoration: none;
+    color: inherit;
 }
 
 /* Button Group */
@@ -188,44 +187,20 @@ button:hover {
     background-color: #e53935;
 }
 
-/* Edit Button */
-.edit-btn {
-    background-color: #ffc107;
-    color: black;
-}
-
-.edit-btn:hover {
-    background-color: #e6a800;
-}
-
-/* Revert Button */
-.revert-btn {
-    background-color: #2196f3;
-    color: white;
-}
-
-.revert-btn:hover {
-    background-color: #1976d2;
-}
-
-/* Hide Buttons for Expired Time-Bound Tasks */
 .todo-card.time-expired .complete-btn,
 .todo-card.time-expired .edit-btn {
     display: none;
 }
 
-/* Hide Timer for Completed Time-Bound Tasks */
 .todo-card.completed .timer {
     display: none;
 }
 
-/* Strikethrough text when a task is completed */
 .todo-card.completed p {
     text-decoration: line-through;
-    color: grey; /* Optional: Change color of completed tasks */
+    color: grey; 
 }
   
-  /* Hide the complete and edit buttons for completed tasks */
 .todo-card.completed .complete-btn,
 .todo-card.completed .edit-btn {
     display: none;

@@ -41,9 +41,9 @@ const fetchTodos = async () => {
 // Periodically check for expired tasks
 const startExpirationCheck = () => {
   setInterval(() => {
-    checkExpiration(); // Check expiration for tasks every minute
-    renderTodos(); // Re-render the list to reflect changes
-  }, 60000); // Check every 60 seconds
+    checkExpiration();
+    renderTodos();
+  }, 60000);
 };
 
 // Check for expired tasks
@@ -62,7 +62,7 @@ const checkExpiration = () => {
 
 // Render todos
 const renderTodos = () => {
-  todoList.innerHTML = ""; // Clear the list first
+  todoList.innerHTML = "";
 
   todos.forEach((todo) => {
     const todoCard = createTodoCard(
@@ -76,7 +76,7 @@ const renderTodos = () => {
     todoList.appendChild(todoCard);
   });
 
-  updateCounts(); // Update both completed and total counts
+  updateCounts();
 };
 
 // Update counts
@@ -210,9 +210,9 @@ const addTodo = () => {
     .then((response) => response.json())
     .then((data) => {
       todos.push(data);
-      checkExpiration(); // Check expiration after adding a new todo
+      checkExpiration();
       renderTodos();
-      updateCounts(); // Update both completed and total counts
+      updateCounts();
     })
     .catch((error) => {
       alert("Error: " + error.message);
